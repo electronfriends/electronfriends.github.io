@@ -127,6 +127,12 @@ header img {
   background: rgba(255, 255, 255, 0.1);
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.version-info:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .download-button {
@@ -332,7 +338,7 @@ footer {
     justify-content: flex-start;
   }
 
-  .menu-image, 
+  .menu-image,
   .download-actions {
     width: 100%;
     max-width: 240px;

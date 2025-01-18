@@ -22,15 +22,11 @@ const setupModal = (modal, downloadButton) => {
 
 const updateVersions = async (releaseData) => {
   try {
-    // Get config.js content from GitHub repository
     const configResponse = await fetch(`https://api.github.com/repos/electronfriends/wemp/contents/src/config.js?ref=${releaseData.tag_name}`);
     const configData = await configResponse.json();
     const configText = atob(configData.content);
-
-    // Extract service versions using regex
     const versionMatches = [...configText.matchAll(/name:\s*'([^']+)',\s*version:\s*'([^']+)'/g)];
 
-    // Update version displays
     versionMatches.forEach(([, name, version]) => {
       const versionSpan = document.querySelector(`[data-service="${name}"]`);
       if (versionSpan) {
@@ -60,9 +56,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelector('.download-size').textContent = formatFileSize(exeAsset.size);
       }
 
-      document.querySelector('.version-tag').textContent = releaseData.tag_name;
+      const versionTag = document.querySelector('.version-tag');
+      versionTag.textContent = releaseData.tag_name;
+      versionTag.closest('.version-info').href = releaseData.html_url;
 
-      // Call updateVersions with release data
       await updateVersions(releaseData);
     }
   } catch (error) {
