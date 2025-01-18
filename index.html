@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Wemp: A modern development environment with Nginx, MariaDB, PHP, and phpMyAdmin, offering simplicity and pre-configured solutions.">
+  <meta name="keywords" content="Wemp, Nginx, MariaDB, PHP, phpMyAdmin, development environment, Electron, XAMPP, Windows">
+  <meta name="author" content="ElectronFriends">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <title>Wemp by ElectronFriends</title>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="." class="logo">
+        <img src="assets/images/logo.png" alt="ElectronFriends Logo">
+      </a>
+      <div class="social-icons">
+        <a href="https://github.com/electronfriends/wemp" target="_blank" rel="noopener">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 5.303 3.438 9.8 8.205 11.387.6.11.82-.26.82-.577v-2.234c-3.338.726-4.042-1.415-4.042-1.415-.546-1.387-1.333-1.756-1.333-1.756-1.089-.744.083-.729.083-.729 1.205.084 1.838 1.235 1.838 1.235 1.07 1.833 2.806 1.303 3.492.996.107-.775.418-1.304.76-1.605-2.665-.305-5.467-1.333-5.467-5.932 0-1.311.469-2.382 1.235-3.221-.123-.304-.535-1.527.117-3.176 0 0 1.008-.322 3.301 1.23a11.544 11.544 0 0 1 3.005-.404c1.018.005 2.044.138 3.004.404 2.294-1.553 3.301-1.23 3.301-1.23.653 1.649.241 2.872.118 3.176.768.839 1.233 1.91 1.233 3.221 0 4.61-2.807 5.623-5.479 5.921.43.37.815 1.096.815 2.21v3.293c0 .319.218.694.824.576C20.565 21.796 24 17.3 24 12 24 5.373 18.627 0 12 0z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="intro">
+      <h1>Wemp: Nginx + MariaDB + PHP + phpMyAdmin</h1>
+      <p>A modern Windows development environment designed for ease of use.</p>
+    </div>
+
+    <div class="download">
+      <div class="download-content">
+        <div class="download-header">
+          <h2>Download Wemp</h2>
+          <span class="version-info"><span class="version-tag">latest</span></span>
+        </div>
+        <ul class="feature-list">
+          <li>Auto-updates to keep all services up-to-date</li>
+          <li>Autostart services when Windows boots</li>
+          <li>Service configuration monitoring with auto-restart</li>
+          <li>Easy management via system tray menu</li>
+          <li>Pre-configured and ready to go</li>
+        </ul>
+        <p class="help-text">Need help? Check our <a href="https://github.com/electronfriends/wemp?tab=readme-ov-file#faqs" target="_blank" rel="noopener">FAQ</a></p>
+      </div>
+      <div class="download-right">
+        <img class="menu-image" src="assets/images/menu-screenshot.png" alt="Screenshot of Wemp menu">
+        <div class="download-actions">
+          <a href="https://github.com/electronfriends/wemp/releases" class="download-button">
+            Download for Windows
+            <span class="download-size">0 MB</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="service-list">
+      <div class="service-item">
+        <a href="https://nginx.org" target="_blank" rel="noopener" class="service-link"></a>
+        <div class="service-content">
+          <img src="assets/images/nginx.svg" alt="Nginx">
+          <span class="service-name">Nginx</span>
+          <span class="version" data-service="Nginx">loading...</span>
+        </div>
+      </div>
+      <div class="service-item">
+        <a href="https://mariadb.org" target="_blank" rel="noopener" class="service-link"></a>
+        <div class="service-content">
+          <img src="assets/images/mariadb.svg" alt="MariaDB">
+          <span class="service-name">MariaDB</span>
+          <span class="version" data-service="MariaDB">loading...</span>
+        </div>
+      </div>
+      <div class="service-item">
+        <a href="https://www.php.net" target="_blank" rel="noopener" class="service-link"></a>
+        <div class="service-content">
+          <img src="assets/images/php.svg" alt="PHP">
+          <span class="service-name">PHP</span>
+          <span class="version" data-service="PHP">loading...</span>
+        </div>
+      </div>
+      <div class="service-item">
+        <a href="https://www.phpmyadmin.net" target="_blank" rel="noopener" class="service-link"></a>
+        <div class="service-content">
+          <img src="assets/images/phpmyadmin.svg" alt="phpMyAdmin">
+          <span class="service-name">phpMyAdmin</span>
+          <span class="version" data-service="phpMyAdmin">loading...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2020-2025 ElectronFriends. No affiliation with Electron.</p>
+  </footer>
+
+  <div id="smartscreen-modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close">&times;</button>
+      <h3>Running Wemp for the first time</h3>
+      <p>When you try to run Wemp, Windows SmartScreen might show a warning because the application is not signed with a certificate.</p>
+      <ol>
+        <li>When the warning appears, click "More info"</li>
+        <li>Click "Run anyway" to start Wemp</li>
+        <li>This warning will only appear the first time you run Wemp</li>
+      </ol>
+      <div class="modal-footer">
+        <button class="modal-button">Got it, download now</button>
+      </div>
+    </div>
+  </div>
+  <script src="assets/js/scripts.js"></script>
+</body>
+</html>

@@ -1,0 +1,397 @@
+/* Variables */
+:root {
+  --background: #2f3243;
+  --surface: #3a3d50;
+  --text: #eaeaea;
+  --accent: #ff6600;
+  --muted: #c5c7d0;
+}
+
+/* Base styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background);
+  color: var(--text);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+h2 {
+  margin: 0;
+}
+
+/* Layout */
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 1rem;
+  flex: 1;
+  position: relative;
+}
+
+/* Header */
+header {
+  text-align: center;
+  position: relative;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+}
+
+header img {
+  width: 150px;
+  cursor: pointer;
+  display: block;
+}
+
+.logo {
+  display: block;
+}
+
+/* Social Icons */
+.social-icons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.social-icons a {
+  display: flex;
+  align-items: center;
+  margin-left: 0;
+}
+
+.social-icons svg {
+  width: 24px;
+  height: 24px;
+  fill: var(--muted);
+  transition: fill 0.2s;
+}
+
+.social-icons a:hover svg {
+  fill: var(--text);
+}
+
+/* Introduction */
+.intro {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.intro h1 {
+  color: var(--accent);
+  font-size: 2.5rem;
+  margin: 0;
+}
+
+.intro p {
+  font-size: 1.2rem;
+}
+
+/* Download Section */
+.download {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  background-color: var(--surface);
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.download-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.download-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.version-info {
+  color: var(--text);
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.download-button {
+  background-color: var(--accent);
+  color: var(--text);
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+  text-align: center;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.download-button:hover {
+  background-color: #e05500;
+}
+
+.download-size {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  font-weight: normal;
+}
+
+.download-actions {
+  display: flex;
+  flex-direction: column;
+  width: 240px;
+  box-sizing: border-box;
+}
+
+.faq-button {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+  padding: 0.5rem 1rem;
+}
+
+.faq-button:hover {
+  color: var(--text);
+}
+
+/* Service List */
+.service-list {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.service-item {
+  flex: 1;
+  background-color: var(--surface);
+  padding: 1.25rem;
+  border-radius: 8px;
+  text-align: center;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.service-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.service-item a.service-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.service-item .service-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.service-item img {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 0.5rem;
+}
+
+.service-name {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.service-name:hover {
+  color: var(--accent);
+}
+
+.version {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--surface);
+  padding: 2rem;
+  border-radius: 8px;
+  position: relative;
+  max-width: 500px;
+  width: 90%;
+}
+
+.modal-close {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1.5rem;
+  padding: 0.5rem;
+}
+
+.modal-close:hover {
+  color: var(--text);
+}
+
+.modal-footer {
+  margin-top: 1.5rem;
+  text-align: right;
+}
+
+.modal-button {
+  background: var(--accent);
+  color: var(--text);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-button:hover {
+  background: #e05500;
+}
+
+.modal-content h3 {
+  margin: 0 0 1rem 0;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Footer */
+footer {
+  background-color: var(--surface);
+  color: var(--muted);
+  text-align: center;
+  padding: 0.15rem;
+  margin-top: 2rem;
+  font-size: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Media Queries */
+@media (min-width: 768px) {
+  .download {
+    flex-direction: row;
+  }
+
+  .menu-image {
+    margin-left: 1rem;
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .download {
+    grid-template-columns: 1fr;
+  }
+
+  .download-content {
+    order: 1;
+  }
+
+  .download-right {
+    order: 1;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .menu-image, 
+  .download-actions {
+    width: 100%;
+    max-width: 240px;
+  }
+
+  .menu-image {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Utilities */
+.help-text {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.help-text a {
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px dotted;
+}
+
+.help-text a:hover {
+  color: var(--text);
+}
+
+.menu-image {
+  height: auto;
+  width: 240px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.feature-list li {
+  padding-left: 1.5rem;
+  position: relative;
+  margin-bottom: 0.5rem;
+}
+
+.feature-list li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.download-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+  align-items: flex-end;
+}
