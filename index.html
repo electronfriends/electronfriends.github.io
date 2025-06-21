@@ -50,7 +50,7 @@
         <p class="help-text">Need help? Check our <a href="https://github.com/electronfriends/wemp?tab=readme-ov-file#faqs" target="_blank" rel="noopener">FAQ</a></p>
       </div>
       <div class="download-right">
-        <img class="menu-image" src="assets/images/menu-screenshot.png" alt="Screenshot of Wemp menu">
+        <img class="menu-image" src="assets/images/menu-screenshot.png" alt="Screenshot of Wemp system tray menu" loading="lazy">
         <div class="download-actions">
           <a href="https://github.com/electronfriends/wemp/releases" class="download-button">
             Download for Windows
@@ -64,7 +64,7 @@
       <div class="service-item">
         <a href="https://nginx.org" target="_blank" rel="noopener" class="service-link"></a>
         <div class="service-content">
-          <img src="assets/images/nginx.svg" alt="Nginx">
+          <img src="assets/images/nginx.svg" alt="Nginx" loading="lazy">
           <span class="service-name">Nginx</span>
           <span class="version" data-service="Nginx">loading...</span>
         </div>
@@ -72,7 +72,7 @@
       <div class="service-item">
         <a href="https://mariadb.org" target="_blank" rel="noopener" class="service-link"></a>
         <div class="service-content">
-          <img src="assets/images/mariadb.svg" alt="MariaDB">
+          <img src="assets/images/mariadb.svg" alt="MariaDB" loading="lazy">
           <span class="service-name">MariaDB</span>
           <span class="version" data-service="MariaDB">loading...</span>
         </div>
@@ -80,7 +80,7 @@
       <div class="service-item">
         <a href="https://www.php.net" target="_blank" rel="noopener" class="service-link"></a>
         <div class="service-content">
-          <img src="assets/images/php.svg" alt="PHP">
+          <img src="assets/images/php.svg" alt="PHP" loading="lazy">
           <span class="service-name">PHP</span>
           <span class="version" data-service="PHP">loading...</span>
         </div>
@@ -88,7 +88,7 @@
       <div class="service-item">
         <a href="https://www.phpmyadmin.net" target="_blank" rel="noopener" class="service-link"></a>
         <div class="service-content">
-          <img src="assets/images/phpmyadmin.svg" alt="phpMyAdmin">
+          <img src="assets/images/phpmyadmin.svg" alt="phpMyAdmin" loading="lazy">
           <span class="service-name">phpMyAdmin</span>
           <span class="version" data-service="phpMyAdmin">loading...</span>
         </div>
@@ -100,10 +100,10 @@
     <p>&copy; 2020-2025 ElectronFriends. No affiliation with Electron.</p>
   </footer>
 
-  <div id="smartscreen-modal" class="modal">
+  <div id="smartscreen-modal" class="modal" role="dialog" aria-labelledby="smartscreen-title">
     <div class="modal-content">
       <button class="modal-close">&times;</button>
-      <h3>Running Wemp for the first time</h3>
+      <h3 id="smartscreen-title">Running Wemp for the first time</h3>
       <p>When you try to run Wemp, Windows SmartScreen might show a warning because the application is not signed with a certificate.</p>
       <ol>
         <li>When the warning appears, click "More info"</li>
