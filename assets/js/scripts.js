@@ -42,11 +42,15 @@ const updateVersions = async (releaseData) => {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const repo = 'electronfriends/wemp';
   const downloadButton = document.querySelector('.download-button');
 
   try {
-    const releasesResponse = await fetch(`https://api.github.com/repos/${repo}/releases/latest`);
+    const releasesResponse = await fetch('https://api.github.com/repos/electronfriends/wemp/releases/latest');
+
+    if (!releasesResponse.ok) {
+      throw new Error(`GitHub API responded with status: ${releasesResponse.status}`);
+    }
+
     const releaseData = await releasesResponse.json();
 
     if (releaseData.assets?.length > 0) {
@@ -61,9 +65,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       versionTag.closest('.version-info').href = releaseData.html_url;
 
       await updateVersions(releaseData);
+    } else {
+      throw new Error('No release assets found');
     }
   } catch (error) {
     console.error('Failed to fetch release data:', error);
+    downloadButton.href = 'https://github.com/electronfriends/wemp/releases/latest';
+    document.querySelector('.download-size').textContent = 'Visit GitHub';
+    document.querySelectorAll('.version[data-service]').forEach(span => {
+      span.textContent = 'unavailable';
+    });
   }
 
   setupModal(document.getElementById('smartscreen-modal'), downloadButton);
