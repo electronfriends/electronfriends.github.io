@@ -20,21 +20,24 @@ const setupModal = (modal, downloadButton) => {
   });
 };
 
-const updateVersions = async (releaseData) => {
+const updateVersions = async () => {
   try {
-    const configResponse = await fetch(`https://api.github.com/repos/electronfriends/wemp/contents/src/config.js?ref=${releaseData.tag_name}`);
-    const configData = await configResponse.json();
-    const configText = atob(configData.content);
-    const versionMatches = [...configText.matchAll(/name:\s*'([^']+)',\s*version:\s*'([^']+)'/g)];
+    const versionsResponse = await fetch('/api/wemp/versions.json');
 
-    versionMatches.forEach(([, name, version]) => {
-      const versionSpan = document.querySelector(`[data-service="${name}"]`);
+    if (!versionsResponse.ok) {
+      throw new Error(`API responded with status: ${versionsResponse.status}`);
+    }
+
+    const versionsData = await versionsResponse.json();
+
+    Object.entries(versionsData).forEach(([serviceId, serviceData]) => {
+      const versionSpan = document.querySelector(`[data-service="${serviceId}"]`);
       if (versionSpan) {
-        versionSpan.textContent = version;
+        versionSpan.textContent = serviceData.version;
       }
     });
   } catch (error) {
-    console.error('Failed to fetch or parse config.js:', error);
+    console.error('Failed to fetch versions:', error);
     document.querySelectorAll('.version[data-service]').forEach(span => {
       span.textContent = 'unavailable';
     });
@@ -64,7 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       versionTag.textContent = releaseData.tag_name;
       versionTag.closest('.version-info').href = releaseData.html_url;
 
-      await updateVersions(releaseData);
+      await updateVersions();
     } else {
       throw new Error('No release assets found');
     }

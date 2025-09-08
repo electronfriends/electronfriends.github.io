@@ -1,0 +1,18 @@
+{
+  "nginx": {
+    "version": "1.29.1",
+    "downloadUrl": "https://nginx.org/download/nginx-1.29.1.zip"
+  },
+  "mariadb": {
+    "version": "12.0.2",
+    "downloadUrl": "https://archive.mariadb.org/mariadb-12.0.2/winx64-packages/mariadb-12.0.2-winx64.zip"
+  },
+  "php": {
+    "version": "8.2.24",
+    "downloadUrl": "https://windows.php.net/downloads/releases/php-8.3.24-nts-Win32-vs16-x64.zip"
+  },
+  "phpmyadmin": {
+    "version": "5.2.2",
+    "downloadUrl": "https://files.phpmyadmin.net/phpMyAdmin/5.2.2/phpMyAdmin-5.2.2-all-languages.zip"
+  }
+}

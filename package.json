@@ -4,7 +4,8 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "update-versions": "node scripts/update-versions.js"
   },
   "devDependencies": {
     "vite": "^6.3.5"
