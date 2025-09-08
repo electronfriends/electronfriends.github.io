@@ -8,6 +8,6 @@
     "update-versions": "node scripts/update-versions.js"
   },
   "devDependencies": {
-    "vite": "^6.3.5"
+    "vite": "^7.1.5"
   }
 }
