@@ -3,13 +3,20 @@ name: Update Wemp Service Versions
 on:
   schedule:
     - cron: '0 9 * * *'
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:
 
 jobs:
   update-versions:
     runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.changes.outputs.has_changes }}
+      has_patch_updates: ${{ steps.update.outputs.has_patch_updates }}
+      has_major_minor_updates: ${{ steps.update.outputs.has_major_minor_updates }}
+      major_minor_services: ${{ steps.update.outputs.major_minor_services }}
+      update_summary: ${{ steps.update.outputs.update_summary }}
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
@@ -19,8 +26,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'npm'
 
       - name: Update service versions
+        id: update
         run: npm run update-versions
 
       - name: Check for changes
@@ -32,11 +41,149 @@ jobs:
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Commit and push changes
+      - name: Generate commit message
         if: steps.changes.outputs.has_changes == 'true'
+        id: message
+        run: |
+          if [[ "${{ steps.update.outputs.has_patch_updates }}" == "true" && "${{ steps.update.outputs.has_major_minor_updates }}" == "true" ]]; then
+            echo "commit_message=Update Wemp service versions (patch + major/minor updates)" >> $GITHUB_OUTPUT
+          elif [[ "${{ steps.update.outputs.has_patch_updates }}" == "true" ]]; then
+            echo "commit_message=Update Wemp service versions (patch updates)" >> $GITHUB_OUTPUT
+          else
+            echo "commit_message=Update Wemp service versions (major/minor updates)" >> $GITHUB_OUTPUT
+          fi
+
+      # Auto-commit patch updates (if no major/minor updates present)
+      - name: Commit and push patch-only updates
+        if: steps.changes.outputs.has_changes == 'true' && steps.update.outputs.has_patch_updates == 'true' && steps.update.outputs.has_major_minor_updates == 'false'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+
+          # Build descriptive commit message from patch updates
+          update_summary='${{ steps.update.outputs.update_summary }}'
+
+          # Create commit message with all patch updates
+          commit_msg="patch updates:"
+          if patch_updates=$(echo "$update_summary" | jq -r '.patch[]? | " bump \(.service) from \(.from) to \(.to)"' | tr '\n' ',' | sed 's/,$//'); then
+            commit_msg="$commit_msg$patch_updates"
+          fi
+
           git add api/wemp/versions.json
-          git commit -m "Update Wemp service versions [skip ci]"
+          git commit -m "$commit_msg [skip ci]"
           git push
+
+  # Create separate PRs for services with major/minor updates
+  create-service-prs:
+    runs-on: ubuntu-latest
+    needs: update-versions
+    if: needs.update-versions.outputs.has_major_minor_updates == 'true'
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      matrix:
+        include:
+          - service: nginx
+            display_name: nginx
+            changelog: "📋 [nginx changelog](https://nginx.org/en/CHANGES)"
+          - service: mariadb
+            display_name: MariaDB
+            changelog: "📋 [MariaDB releases](https://mariadb.org/release-notes/)"
+          - service: php
+            display_name: PHP
+            changelog: "📋 [PHP releases](https://www.php.net/releases/)"
+          - service: phpmyadmin
+            display_name: phpMyAdmin
+            changelog: "📋 [phpMyAdmin releases](https://github.com/phpmyadmin/phpmyadmin/releases)"
+
+    steps:
+      - name: Check if service needs update
+        id: check
+        run: |
+          services="${{ needs.update-versions.outputs.major_minor_services }}"
+          if [[ "$services" == *"${{ matrix.service }}"* ]]; then
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+          else
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip if no update needed
+        if: steps.check.outputs.needs_update == 'false'
+        run: |
+          echo "No ${{ matrix.service }} update needed, skipping"
+
+      - name: Checkout repository
+        if: steps.check.outputs.needs_update == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        if: steps.check.outputs.needs_update == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Get service update details
+        if: steps.check.outputs.needs_update == 'true'
+        id: details
+        run: |
+          update_summary='${{ needs.update-versions.outputs.update_summary }}'
+          service_update=$(echo "$update_summary" | jq -r ".majorMinor[] | select(.service == \"${{ matrix.service }}\")")
+
+          from_version=$(echo "$service_update" | jq -r '.from')
+          to_version=$(echo "$service_update" | jq -r '.to')
+          update_type=$(echo "$service_update" | jq -r '.type')
+
+          echo "from_version=$from_version" >> $GITHUB_OUTPUT
+          echo "to_version=$to_version" >> $GITHUB_OUTPUT
+          echo "update_type=$update_type" >> $GITHUB_OUTPUT
+
+      - name: Apply service update
+        if: steps.check.outputs.needs_update == 'true'
+        id: apply
+        run: |
+          # Run updater to get all latest versions
+          npm run update-versions
+
+          # Keep only the target service update, revert others
+          target_service="${{ matrix.service }}"
+
+          # Get the updated info for our target service
+          new_version=$(jq -r ".$target_service.version" api/wemp/versions.json)
+          new_url=$(jq -r ".$target_service.downloadUrl" api/wemp/versions.json)
+
+          # Reset file to original state
+          git checkout HEAD -- api/wemp/versions.json
+
+          # Apply only our target service update
+          jq --arg service "$target_service" \
+             --arg version "$new_version" \
+             --arg url "$new_url" \
+             '.[$service] = {"version": $version, "downloadUrl": $url}' \
+             api/wemp/versions.json > temp.json
+          mv temp.json api/wemp/versions.json
+
+          # Store version for PR title
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        if: steps.check.outputs.needs_update == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "bump ${{ matrix.service }} from ${{ steps.details.outputs.from_version }} to ${{ steps.apply.outputs.new_version }}"
+          title: "⬆️ bump ${{ matrix.service }} from ${{ steps.details.outputs.from_version }} to ${{ steps.apply.outputs.new_version }}"
+          body: |
+            Bumps ${{ matrix.service }} from ${{ steps.details.outputs.from_version }} to ${{ steps.apply.outputs.new_version }}.
+
+            This is a **${{ steps.details.outputs.update_type }}** update.
+
+            ${{ matrix.changelog }}
+          branch: update-${{ matrix.service }}
+          delete-branch: false
+          labels: |
+            ${{ matrix.service }}
+            ${{ steps.details.outputs.update_type }}-update

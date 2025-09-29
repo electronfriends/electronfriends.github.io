@@ -15,34 +15,47 @@ const __dirname = path.dirname(__filename);
 const USER_AGENT = 'Mozilla/5.0 (compatible; Wemp-Version-Updater/1.0; +https://github.com/electronfriends/wemp)';
 
 /**
- * Compare two semantic version strings
+ * Compare two semantic version strings and categorize the update type
  */
-function isNewerVersion(newVersion, currentVersion) {
-  if (!currentVersion) return true;
-  
+function compareVersions(newVersion, currentVersion) {
+  if (!currentVersion) return { isNewer: true, updateType: 'major' };
+
   const parseVersion = (v) => v.split('.').map(Number);
   const [newMajor, newMinor, newPatch] = parseVersion(newVersion);
   const [curMajor, curMinor, curPatch] = parseVersion(currentVersion);
-  
-  if (newMajor !== curMajor) return newMajor > curMajor;
-  if (newMinor !== curMinor) return newMinor > curMinor;
-  return newPatch > curPatch;
+
+  if (newMajor > curMajor) return { isNewer: true, updateType: 'major' };
+  if (newMajor < curMajor) return { isNewer: false, updateType: null };
+
+  if (newMinor > curMinor) return { isNewer: true, updateType: 'minor' };
+  if (newMinor < curMinor) return { isNewer: false, updateType: null };
+
+  if (newPatch > curPatch) return { isNewer: true, updateType: 'patch' };
+
+  return { isNewer: false, updateType: null };
 }
 
 /**
  * Fetch JSON data from URL with timeout
  */
 async function fetchJson(url) {
-  const response = await fetch(url, {
-    headers: { 'User-Agent': USER_AGENT },
-    signal: AbortSignal.timeout(10000)
-  });
+  try {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': USER_AGENT },
+      signal: AbortSignal.timeout(10000)
+    });
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error.name === 'TimeoutError') {
+      throw new Error(`Request timeout for ${url}`);
+    }
+    throw error;
   }
-
-  return response.json();
 }
 
 /**
@@ -57,75 +70,186 @@ async function isValidZip(url) {
     });
 
     return response.ok && url.endsWith('.zip');
-  } catch {
+  } catch (error) {
+    console.warn(`⚠️  Failed to validate ZIP URL ${url}:`, error.message);
     return false;
   }
+}
+
+/**
+ * Find available version updates for a service
+ */
+function findAvailableUpdates(availableVersions, currentVersion) {
+  if (!currentVersion) {
+    return { latest: availableVersions[0] };
+  }
+
+  const parseVersion = (v) => v.split('.').map(Number);
+  const [curMajor, curMinor] = parseVersion(currentVersion);
+
+  // Find the latest patch version within the same major.minor
+  const patchUpdates = availableVersions.filter(version => {
+    const [major, minor] = parseVersion(version);
+    return major === curMajor && minor === curMinor;
+  });
+
+  const latestPatch = patchUpdates.length > 0 && patchUpdates[0] !== currentVersion ? patchUpdates[0] : null;
+  const latestOverall = availableVersions[0] !== currentVersion ? availableVersions[0] : null;
+
+  // Return patch and latest versions
+  return {
+    patch: latestPatch,
+    latest: latestOverall
+  };
 }
 
 /**
  * Service version fetchers for each supported service
  */
 const serviceFetchers = {
-  async nginx() {
-    const tags = await fetchJson('https://api.github.com/repos/nginx/nginx/tags');
-    const releaseTag = tags.find(tag => /^release-\d+\.\d+\.\d+$/.test(tag.name));
-    if (releaseTag) {
-      const version = releaseTag.name.replace('release-', '');
-      const downloadUrl = `https://nginx.org/download/nginx-${version}.zip`;
+  async nginx(currentVersion) {
+    const tags = await fetchJson('https://api.github.com/repos/nginx/nginx/tags?per_page=100');
+    const nginxVersions = tags
+      .filter(tag => /^release-\d+\.\d+\.\d+$/.test(tag.name))
+      .map(tag => tag.name.replace('release-', ''))
+      .sort((a, b) => {
+        const [aMajor, aMinor, aPatch] = a.split('.').map(Number);
+        const [bMajor, bMinor, bPatch] = b.split('.').map(Number);
+        return bMajor - aMajor || bMinor - aMinor || bPatch - aPatch;
+      });
 
-      if (!(await isValidZip(downloadUrl))) {
-        throw new Error('Invalid download URL');
-      }
+    if (nginxVersions.length === 0) return null;
 
-      return { version, downloadUrl };
-    }
-    return null;
-  },
+    const updates = findAvailableUpdates(nginxVersions, currentVersion);
 
-  async mariadb() {
-    const data = await fetchJson('https://api.github.com/repos/MariaDB/server/releases/latest');
-    const version = data.tag_name.replace(/^mariadb-/, '');
-    const downloadUrl = `https://archive.mariadb.org/mariadb-${version}/winx64-packages/mariadb-${version}-winx64.zip`;
+    const bestVersion = updates.patch || updates.latest;
+    if (!bestVersion) return null;
 
-    if (!(await isValidZip(downloadUrl))) {
-      throw new Error('Invalid download URL');
-    }
-
-    return { version, downloadUrl };
-  },
-
-  async php() {
-    // Keep PHP at 8.3.x for phpMyAdmin compatibility
-    // NOTE: When upgrading to PHP 8.4+, change vs16 to vs17 in URLs below
-    const tags = await fetchJson('https://api.github.com/repos/php/php-src/tags');
-    const phpTag = tags.find(tag => tag.name.startsWith('php-8.3.'));
-    if (phpTag) {
-      const version = phpTag.name.replace('php-', '');
-      const primaryUrl = `https://windows.php.net/downloads/releases/php-${version}-nts-Win32-vs16-x64.zip`;
-      const archiveUrl = `https://windows.php.net/downloads/releases/archives/php-${version}-nts-Win32-vs16-x64.zip`;
-
-      // Try primary URL first, then archive
-      if (await isValidZip(primaryUrl)) {
-        return { version, downloadUrl: primaryUrl };
-      } else if (await isValidZip(archiveUrl)) {
-        return { version, downloadUrl: archiveUrl };
-      }
-
-      throw new Error('No valid download URL found');
-    }
-    return null;
-  },
-
-  async phpmyadmin() {
-    const data = await fetchJson('https://api.github.com/repos/phpmyadmin/phpmyadmin/releases/latest');
-    const version = data.tag_name.replace(/^RELEASE_/, '').replace(/_/g, '.');
-    const downloadUrl = `https://files.phpmyadmin.net/phpMyAdmin/${version}/phpMyAdmin-${version}-all-languages.zip`;
+    const downloadUrl = `https://nginx.org/download/nginx-${bestVersion}.zip`;
 
     if (!(await isValidZip(downloadUrl))) {
       throw new Error('Invalid download URL');
     }
 
-    return { version, downloadUrl };
+    return {
+      version: bestVersion,
+      downloadUrl,
+      updates
+    };
+  },
+
+  async mariadb(currentVersion) {
+    const releases = await fetchJson('https://api.github.com/repos/MariaDB/server/releases?per_page=50');
+    const mariadbVersions = releases
+      .filter(release => !release.prerelease && !release.draft)
+      .map(release => release.tag_name.replace(/^mariadb-/, ''))
+      .filter(version => /^\d+\.\d+\.\d+$/.test(version))
+      .sort((a, b) => {
+        const [aMajor, aMinor, aPatch] = a.split('.').map(Number);
+        const [bMajor, bMinor, bPatch] = b.split('.').map(Number);
+        return bMajor - aMajor || bMinor - aMinor || bPatch - aPatch;
+      });
+
+    if (mariadbVersions.length === 0) return null;
+
+    const updates = findAvailableUpdates(mariadbVersions, currentVersion);
+
+    const bestVersion = updates.patch || updates.latest;
+    if (!bestVersion) return null;
+
+    const downloadUrl = `https://archive.mariadb.org/mariadb-${bestVersion}/winx64-packages/mariadb-${bestVersion}-winx64.zip`;
+
+    if (!(await isValidZip(downloadUrl))) {
+      throw new Error('Invalid download URL');
+    }
+
+    return {
+      version: bestVersion,
+      downloadUrl,
+      updates
+    };
+  },
+
+  async php(currentVersion) {
+    const tags = await fetchJson('https://api.github.com/repos/php/php-src/tags?per_page=100');
+    const phpVersions = tags
+      .filter(tag => /^php-\d+\.\d+\.\d+$/.test(tag.name))
+      .map(tag => tag.name.replace('php-', ''))
+      .sort((a, b) => {
+        const [aMajor, aMinor, aPatch] = a.split('.').map(Number);
+        const [bMajor, bMinor, bPatch] = b.split('.').map(Number);
+        return bMajor - aMajor || bMinor - aMinor || bPatch - aPatch;
+      });
+
+    if (phpVersions.length === 0) return null;
+
+    const updates = findAvailableUpdates(phpVersions, currentVersion);
+
+    const bestVersion = updates.patch || updates.latest;
+    if (!bestVersion) return null;
+
+    // Get download info from PHP Windows releases API
+    const releasesData = await fetchJson('https://windows.php.net/downloads/releases/releases.json');
+    const [major, minor] = bestVersion.split('.');
+    const versionKey = `${major}.${minor}`;
+
+    if (!releasesData[versionKey]) {
+      throw new Error(`No Windows release data found for PHP ${bestVersion}`);
+    }
+
+    const versionData = releasesData[versionKey];
+    if (versionData.version !== bestVersion) {
+      throw new Error(`Version mismatch: expected ${bestVersion}, found ${versionData.version}`);
+    }
+
+    // Look for NTS x64 build (preferred for most use cases)
+    const buildTypes = Object.keys(versionData).filter(key => key.includes('nts') && key.includes('x64'));
+
+    if (buildTypes.length === 0) {
+      throw new Error(`No suitable NTS x64 build found for PHP ${bestVersion}`);
+    }
+
+    const buildType = buildTypes[0]; // Use first available NTS x64 build
+    const buildData = versionData[buildType];
+    const downloadUrl = `https://windows.php.net/downloads/releases/${buildData.zip.path}`;
+
+    return {
+      version: bestVersion,
+      downloadUrl,
+      updates
+    };
+  },
+
+  async phpmyadmin(currentVersion) {
+    const releases = await fetchJson('https://api.github.com/repos/phpmyadmin/phpmyadmin/releases?per_page=50');
+    const pmaVersions = releases
+      .filter(release => !release.prerelease && !release.draft)
+      .map(release => release.tag_name.replace(/^RELEASE_/, '').replace(/_/g, '.'))
+      .filter(version => /^\d+\.\d+\.\d+$/.test(version))
+      .sort((a, b) => {
+        const [aMajor, aMinor, aPatch] = a.split('.').map(Number);
+        const [bMajor, bMinor, bPatch] = b.split('.').map(Number);
+        return bMajor - aMajor || bMinor - aMinor || bPatch - aPatch;
+      });
+
+    if (pmaVersions.length === 0) return null;
+
+    const updates = findAvailableUpdates(pmaVersions, currentVersion);
+
+    const bestVersion = updates.patch || updates.latest;
+    if (!bestVersion) return null;
+
+    const downloadUrl = `https://files.phpmyadmin.net/phpMyAdmin/${bestVersion}/phpMyAdmin-${bestVersion}-all-languages.zip`;
+
+    if (!(await isValidZip(downloadUrl))) {
+      throw new Error('Invalid download URL');
+    }
+
+    return {
+      version: bestVersion,
+      downloadUrl,
+      updates
+    };
   }
 };
 
@@ -144,32 +268,102 @@ async function updateVersions() {
     throw error;
   }
 
-  let hasUpdates = false;
+  let hasPatchUpdates = false;
+  let hasMajorMinorUpdates = false;
   const services = Object.keys(serviceFetchers);
+  const updateSummary = { patch: [], majorMinor: [] };
+  const majorMinorServices = new Set();
 
-  for (const service of services) {
-    try {
-      const latestInfo = await serviceFetchers[service]();
+  // Process services concurrently
+  const results = await Promise.allSettled(
+    services.map(async (service) => {
+      try {
+        const currentVersion = versions[service]?.version;
+        const latestInfo = await serviceFetchers[service](currentVersion);
 
-      if (latestInfo && isNewerVersion(latestInfo.version, versions[service]?.version)) {
-        const currentVersion = versions[service]?.version || 'none';
-        console.log(`📦 ${service}: ${currentVersion} → ${latestInfo.version}`);
-        versions[service] = {
-          version: latestInfo.version,
-          downloadUrl: latestInfo.downloadUrl
-        };
-        hasUpdates = true;
+        if (latestInfo?.updates) {
+          const currentVersion = versions[service]?.version || 'none';
+          const { patch, latest } = latestInfo.updates;
+
+          // Check for patch update
+          if (patch && patch !== currentVersion) {
+            const patchComparison = compareVersions(patch, currentVersion);
+            if (patchComparison.isNewer) {
+              console.log(`📦 ${service}: ${currentVersion} → ${patch} (${patchComparison.updateType})`);
+              hasPatchUpdates = true;
+              updateSummary.patch.push({ service, from: currentVersion, to: patch });
+            }
+          }
+
+          // Check for major/minor update (if different from patch)
+          if (latest && latest !== currentVersion && latest !== patch) {
+            const latestComparison = compareVersions(latest, currentVersion);
+            if (latestComparison.isNewer && latestComparison.updateType !== 'patch') {
+              console.log(`📦 ${service}: ${currentVersion} → ${latest} (${latestComparison.updateType}) [also available]`);
+              hasMajorMinorUpdates = true;
+              majorMinorServices.add(service);
+              updateSummary.majorMinor.push({
+                service,
+                from: currentVersion,
+                to: latest,
+                type: latestComparison.updateType
+              });
+            }
+          }
+
+          // Update versions.json with selected version
+          const selectedVersion = patch || latest;
+          if (selectedVersion && selectedVersion !== currentVersion) {
+            versions[service] = {
+              version: selectedVersion,
+              downloadUrl: latestInfo.downloadUrl
+            };
+          }
+        }
+
+        return { service, success: true };
+      } catch (error) {
+        console.error(`❌ ${service}: ${error.message}`);
+        return { service, success: false, error: error.message };
       }
-    } catch (error) {
-      console.error(`❌ ${service}: ${error.message}`);
-    }
+    })
+  );
+
+  // Report failed services
+  const failedServices = results
+    .filter(result => result.status === 'rejected' || !result.value.success)
+    .map(result => result.status === 'rejected' ? 'unknown' : result.value.service);
+
+  if (failedServices.length > 0) {
+    console.warn(`⚠️  Failed to update: ${failedServices.join(', ')}`);
   }
 
-  if (hasUpdates) {
+  // Write updated versions file
+  if (hasPatchUpdates || hasMajorMinorUpdates) {
     fs.writeFileSync(versionsPath, JSON.stringify(versions, null, 2) + '\n');
     console.log('✅ Updated versions.json');
+
+    // Export data for GitHub Actions
+    if (process.env.GITHUB_ACTIONS && process.env.GITHUB_OUTPUT) {
+      const majorMinorServicesList = Array.from(majorMinorServices).join(',');
+      const outputs = [
+        `has_patch_updates=${hasPatchUpdates}`,
+        `has_major_minor_updates=${hasMajorMinorUpdates}`,
+        `update_summary=${JSON.stringify(updateSummary).replace(/\n/g, '\\n')}`,
+        `major_minor_services=${majorMinorServicesList}`
+      ];
+
+      console.log('Setting GitHub Actions outputs...');
+      const outputContent = outputs.join('\n') + '\n';
+      fs.appendFileSync(process.env.GITHUB_OUTPUT, outputContent);
+    }
   } else {
     console.log('✅ No updates needed');
+
+    if (process.env.GITHUB_ACTIONS && process.env.GITHUB_OUTPUT) {
+      const outputContent = 'has_patch_updates=false\nhas_major_minor_updates=false\nmajor_minor_services=\n';
+      fs.appendFileSync(process.env.GITHUB_OUTPUT, outputContent);
+    }
   }
 }
 
