@@ -101,10 +101,15 @@ jobs:
       - name: Check if service needs update
         id: check
         run: |
-          services="${{ needs.update-versions.outputs.major_minor_services }}"
-          if [[ "$services" == *"${{ matrix.service }}"* ]]; then
+          services='${{ needs.update-versions.outputs.major_minor_services }}'
+          echo "Services with major/minor updates: $services"
+          
+          # Check if the service is in the JSON array
+          if echo "$services" | jq -e --arg svc "${{ matrix.service }}" 'any(. == $svc)' > /dev/null 2>&1; then
+            echo "Service ${{ matrix.service }} needs update"
             echo "needs_update=true" >> $GITHUB_OUTPUT
           else
+            echo "Service ${{ matrix.service }} does not need update"
             echo "needs_update=false" >> $GITHUB_OUTPUT
           fi
 

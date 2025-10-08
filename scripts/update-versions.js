@@ -71,7 +71,7 @@ async function isValidZip(url) {
 
     return response.ok && url.endsWith('.zip');
   } catch (error) {
-    console.warn(`⚠️  Failed to validate ZIP URL ${url}:`, error.message);
+    console.warn(`[WARN] Failed to validate ZIP URL ${url}:`, error.message);
     return false;
   }
 }
@@ -259,12 +259,12 @@ const serviceFetchers = {
 async function updateVersions() {
   const versionsPath = path.join(__dirname, '../api/wemp/versions.json');
 
-  console.log('📄 Reading current versions...');
+  console.log('Reading current versions...');
   let versions;
   try {
     versions = JSON.parse(fs.readFileSync(versionsPath, 'utf8'));
   } catch (error) {
-    console.error('❌ Failed to read versions.json:', error);
+    console.error('[ERROR] Failed to read versions.json:', error);
     throw error;
   }
 
@@ -274,78 +274,88 @@ async function updateVersions() {
   const updateSummary = { patch: [], majorMinor: [] };
   const majorMinorServices = new Set();
 
-  // Process services concurrently
-  const results = await Promise.allSettled(
-    services.map(async (service) => {
-      try {
-        const currentVersion = versions[service]?.version;
-        const latestInfo = await serviceFetchers[service](currentVersion);
+  console.log(`\nChecking ${services.length} services for updates...\n`);
 
-        if (latestInfo?.updates) {
-          const currentVersion = versions[service]?.version || 'none';
-          const { patch, latest } = latestInfo.updates;
+  // Process services sequentially to ensure clean output
+  const results = [];
+  for (const service of services) {
+    try {
+      const currentVersion = versions[service]?.version;
+      console.log(`  Checking ${service}... (current: ${currentVersion || 'not installed'})`);
+      const latestInfo = await serviceFetchers[service](currentVersion);
 
-          // Check for patch update
-          if (patch && patch !== currentVersion) {
-            const patchComparison = compareVersions(patch, currentVersion);
-            if (patchComparison.isNewer) {
-              console.log(`📦 ${service}: ${currentVersion} → ${patch} (${patchComparison.updateType})`);
-              hasPatchUpdates = true;
-              updateSummary.patch.push({ service, from: currentVersion, to: patch });
-            }
-          }
+      if (latestInfo?.updates) {
+        const currentVersion = versions[service]?.version || 'none';
+        const { patch, latest } = latestInfo.updates;
 
-          // Check for major/minor update (if different from patch)
-          if (latest && latest !== currentVersion && latest !== patch) {
-            const latestComparison = compareVersions(latest, currentVersion);
-            if (latestComparison.isNewer && latestComparison.updateType !== 'patch') {
-              console.log(`📦 ${service}: ${currentVersion} → ${latest} (${latestComparison.updateType}) [also available]`);
-              hasMajorMinorUpdates = true;
-              majorMinorServices.add(service);
-              updateSummary.majorMinor.push({
-                service,
-                from: currentVersion,
-                to: latest,
-                type: latestComparison.updateType
-              });
-            }
-          }
-
-          // Update versions.json with selected version
-          const selectedVersion = patch || latest;
-          if (selectedVersion && selectedVersion !== currentVersion) {
-            versions[service] = {
-              version: selectedVersion,
-              downloadUrl: latestInfo.downloadUrl
-            };
+        // Check for patch update
+        if (patch && patch !== currentVersion) {
+          const patchComparison = compareVersions(patch, currentVersion);
+          if (patchComparison.isNewer) {
+            console.log(`    [PATCH] ${currentVersion} -> ${patch}`);
+            hasPatchUpdates = true;
+            updateSummary.patch.push({ service, from: currentVersion, to: patch });
           }
         }
 
-        return { service, success: true };
-      } catch (error) {
-        console.error(`❌ ${service}: ${error.message}`);
-        return { service, success: false, error: error.message };
+        // Check for major/minor update (if different from patch)
+        if (latest && latest !== currentVersion && latest !== patch) {
+          const latestComparison = compareVersions(latest, currentVersion);
+          if (latestComparison.isNewer && latestComparison.updateType !== 'patch') {
+            console.log(`    [${latestComparison.updateType.toUpperCase()}] ${currentVersion} -> ${latest} (available)`);
+            hasMajorMinorUpdates = true;
+            majorMinorServices.add(service);
+            updateSummary.majorMinor.push({
+              service,
+              from: currentVersion,
+              to: latest,
+              type: latestComparison.updateType
+            });
+          }
+        }
+
+        // Update versions.json with selected version
+        const selectedVersion = patch || latest;
+        if (selectedVersion && selectedVersion !== currentVersion) {
+          versions[service] = {
+            version: selectedVersion,
+            downloadUrl: latestInfo.downloadUrl
+          };
+        } else {
+          console.log(`    [UP-TO-DATE]`);
+        }
       }
-    })
-  );
+
+      results.push({ service, success: true });
+    } catch (error) {
+      console.error(`    [ERROR] ${error.message}`);
+      results.push({ service, success: false, error: error.message });
+    }
+  }
+
+  console.log('\nUpdate Summary:\n');
 
   // Report failed services
   const failedServices = results
-    .filter(result => result.status === 'rejected' || !result.value.success)
-    .map(result => result.status === 'rejected' ? 'unknown' : result.value.service);
+    .filter(result => !result.success)
+    .map(result => result.service);
 
   if (failedServices.length > 0) {
-    console.warn(`⚠️  Failed to update: ${failedServices.join(', ')}`);
+    console.warn(`  Failed services: ${failedServices.join(', ')}\n`);
   }
 
   // Write updated versions file
   if (hasPatchUpdates || hasMajorMinorUpdates) {
+    console.log(`  Patch updates: ${updateSummary.patch.length > 0 ? updateSummary.patch.map(u => u.service).join(', ') : 'none'}`);
+    console.log(`  Major/Minor updates: ${updateSummary.majorMinor.length > 0 ? updateSummary.majorMinor.map(u => u.service).join(', ') : 'none'}`);
+    console.log('');
+
     fs.writeFileSync(versionsPath, JSON.stringify(versions, null, 2) + '\n');
-    console.log('✅ Updated versions.json');
+    console.log('Updated versions.json successfully');
 
     // Export data for GitHub Actions
     if (process.env.GITHUB_ACTIONS && process.env.GITHUB_OUTPUT) {
-      const majorMinorServicesList = Array.from(majorMinorServices).join(',');
+      const majorMinorServicesList = JSON.stringify(Array.from(majorMinorServices));
       const outputs = [
         `has_patch_updates=${hasPatchUpdates}`,
         `has_major_minor_updates=${hasMajorMinorUpdates}`,
@@ -353,15 +363,20 @@ async function updateVersions() {
         `major_minor_services=${majorMinorServicesList}`
       ];
 
-      console.log('Setting GitHub Actions outputs...');
+      console.log('Setting GitHub Actions outputs:');
+      console.log(`  has_patch_updates=${hasPatchUpdates}`);
+      console.log(`  has_major_minor_updates=${hasMajorMinorUpdates}`);
+      console.log(`  major_minor_services=${majorMinorServicesList}`);
+
       const outputContent = outputs.join('\n') + '\n';
       fs.appendFileSync(process.env.GITHUB_OUTPUT, outputContent);
     }
   } else {
-    console.log('✅ No updates needed');
+    console.log('  All services are up to date\n');
+    console.log('No updates needed');
 
     if (process.env.GITHUB_ACTIONS && process.env.GITHUB_OUTPUT) {
-      const outputContent = 'has_patch_updates=false\nhas_major_minor_updates=false\nmajor_minor_services=\n';
+      const outputContent = 'has_patch_updates=false\nhas_major_minor_updates=false\nmajor_minor_services=[]\n';
       fs.appendFileSync(process.env.GITHUB_OUTPUT, outputContent);
     }
   }
@@ -370,6 +385,6 @@ async function updateVersions() {
 // Run the updater
 updateVersions()
   .catch(error => {
-    console.error('❌ Update failed:', error);
+    console.error('[ERROR] Update failed:', error);
     process.exit(1);
   });
