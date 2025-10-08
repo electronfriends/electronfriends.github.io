@@ -8,8 +8,8 @@
     "downloadUrl": "https://archive.mariadb.org/mariadb-12.0.2/winx64-packages/mariadb-12.0.2-winx64.zip"
   },
   "php": {
-    "version": "8.3.26",
-    "downloadUrl": "https://windows.php.net/downloads/releases/php-8.3.26-nts-Win32-vs16-x64.zip"
+    "version": "8.4.13",
+    "downloadUrl": "https://windows.php.net/downloads/releases/php-8.4.13-nts-Win32-vs17-x64.zip"
   },
   "phpmyadmin": {
     "version": "5.2.2",
