@@ -308,6 +308,10 @@ header .container {
 .version {
   color: var(--muted);
   font-size: 0.85rem;
+  display: inline-block;
+  min-width: 4rem;
+  text-align: center;
+  transition: opacity 0.3s ease-in-out;
 }
 
 /* Modal */

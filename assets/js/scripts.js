@@ -20,6 +20,25 @@ const setupModal = (modal, downloadButton) => {
   });
 };
 
+const animateVersions = (versionSpan, versions) => {
+  let currentIndex = 0;
+
+  versionSpan.textContent = versions[0];
+  versionSpan.style.transition = 'opacity 0.3s ease-in-out';
+
+  if (versions.length > 1) {
+    setInterval(() => {
+      currentIndex = (currentIndex + 1) % versions.length;
+      versionSpan.style.opacity = '0';
+
+      setTimeout(() => {
+        versionSpan.textContent = versions[currentIndex];
+        versionSpan.style.opacity = '1';
+      }, 300);
+    }, 2500);
+  }
+};
+
 const updateVersions = async () => {
   try {
     const versionsResponse = await fetch('/api/wemp/versions.json');
@@ -32,7 +51,12 @@ const updateVersions = async () => {
 
     Object.entries(versionsData).forEach(([serviceId, serviceData]) => {
       const versionSpan = document.querySelector(`[data-service="${serviceId}"]`);
-      if (versionSpan) {
+      if (!versionSpan) return;
+
+      if (serviceData.versions && Array.isArray(serviceData.versions)) {
+        const versions = serviceData.versions.map(v => v.version);
+        animateVersions(versionSpan, versions);
+      } else {
         versionSpan.textContent = serviceData.version;
       }
     });
