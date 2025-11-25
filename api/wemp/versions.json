@@ -8,8 +8,36 @@
     "downloadUrl": "https://archive.mariadb.org/mariadb-12.1.2/winx64-packages/mariadb-12.1.2-winx64.zip"
   },
   "php": {
-    "version": "8.5.0",
-    "downloadUrl": "https://windows.php.net/downloads/releases/php-8.5.0-nts-Win32-vs17-x64.zip"
+    "versions": [
+      {
+        "version": "8.5.0",
+        "downloadUrl": "https://windows.php.net/downloads/releases/php-8.5.0-nts-Win32-vs17-x64.zip"
+      },
+      {
+        "version": "8.4.15",
+        "downloadUrl": "https://windows.php.net/downloads/releases/php-8.4.15-nts-Win32-vs17-x64.zip"
+      },
+      {
+        "version": "8.3.28",
+        "downloadUrl": "https://windows.php.net/downloads/releases/php-8.3.28-nts-Win32-vs16-x64.zip"
+      },
+      {
+        "version": "8.2.29",
+        "downloadUrl": "https://windows.php.net/downloads/releases/php-8.2.29-nts-Win32-vs16-x64.zip"
+      },
+      {
+        "version": "8.1.33",
+        "downloadUrl": "https://windows.php.net/downloads/releases/php-8.1.33-nts-Win32-vs16-x64.zip"
+      },
+      {
+        "version": "8.0.30",
+        "downloadUrl": "https://windows.php.net/downloads/releases/php-8.0.30-nts-Win32-vs16-x64.zip"
+      },
+      {
+        "version": "7.4.33",
+        "downloadUrl": "https://windows.php.net/downloads/releases/php-7.4.33-nts-Win32-vc15-x64.zip"
+      }
+    ]
   },
   "phpmyadmin": {
     "version": "5.2.3",

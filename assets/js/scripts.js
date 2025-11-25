@@ -25,6 +25,7 @@ const animateVersions = (versionSpan, versions) => {
 
   versionSpan.textContent = versions[0];
   versionSpan.style.transition = 'opacity 0.3s ease-in-out';
+  versionSpan.style.opacity = '1';
 
   if (versions.length > 1) {
     setInterval(() => {
