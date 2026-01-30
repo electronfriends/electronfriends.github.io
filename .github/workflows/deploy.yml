@@ -34,27 +34,49 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Check if deployment needed
+        if: github.event_name == 'workflow_run'
+        id: check_deploy
+        run: |
+          # Check if the last commit was from the version update workflow
+          last_commit_author=$(git log -1 --pretty=format:'%an')
+          echo "Last commit author: $last_commit_author"
+
+          if [[ "$last_commit_author" == "GitHub Action" ]]; then
+            echo "Changes from update workflow detected, proceeding with deployment"
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes from update workflow, skipping deployment"
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Setup Node
+        if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
+        if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
         run: npm ci
 
       - name: Build project
+        if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
         run: npm run build
 
       - name: Copy API files to build
+        if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
         run: |
           mkdir -p dist/api
           cp -r api/* dist/api/
 
       - name: Setup Pages
+        if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
+        if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: './dist'
@@ -63,7 +85,7 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || needs.build.result == 'success')
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

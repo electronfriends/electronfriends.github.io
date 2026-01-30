@@ -50,18 +50,6 @@ jobs:
           updated_versions=$(cat api/wemp/versions.json | jq -c .)
           echo "updated_versions=$updated_versions" >> $GITHUB_OUTPUT
 
-      - name: Generate commit message
-        if: steps.changes.outputs.has_changes == 'true'
-        id: message
-        run: |
-          if [[ "${{ steps.update.outputs.has_patch_updates }}" == "true" && "${{ steps.update.outputs.has_major_minor_updates }}" == "true" ]]; then
-            echo "commit_message=Update Wemp service versions (patch + major/minor updates)" >> $GITHUB_OUTPUT
-          elif [[ "${{ steps.update.outputs.has_patch_updates }}" == "true" ]]; then
-            echo "commit_message=Update Wemp service versions (patch updates)" >> $GITHUB_OUTPUT
-          else
-            echo "commit_message=Update Wemp service versions (major/minor updates)" >> $GITHUB_OUTPUT
-          fi
-
       - name: Commit and push patch updates
         if: steps.changes.outputs.has_changes == 'true' && steps.update.outputs.has_patch_updates == 'true'
         run: |
@@ -79,24 +67,7 @@ jobs:
 
           git add api/wemp/versions.json
           git commit -m "$commit_msg"
-
-          # Retry push with force if needed (in case of conflicts)
-          for i in {1..3}; do
-            if git push; then
-              echo "Successfully pushed changes"
-              break
-            else
-              echo "Push failed, attempting to pull and retry..."
-              git pull --rebase origin main
-              if [ $? -eq 0 ]; then
-                continue
-              else
-                echo "Rebase failed, will retry..."
-                git rebase --abort || true
-                git pull --no-rebase origin main
-              fi
-            fi
-          done
+          git push
 
   create-service-prs:
     runs-on: ubuntu-latest
