@@ -1,11 +1,11 @@
 {
   "nginx": {
-    "version": "1.29.4",
-    "downloadUrl": "https://nginx.org/download/nginx-1.29.4.zip"
+    "version": "1.29.5",
+    "downloadUrl": "https://nginx.org/download/nginx-1.29.5.zip"
   },
   "mariadb": {
-    "version": "12.1.2",
-    "downloadUrl": "https://archive.mariadb.org/mariadb-12.1.2/winx64-packages/mariadb-12.1.2-winx64.zip"
+    "version": "12.2.2",
+    "downloadUrl": "https://archive.mariadb.org/mariadb-12.2.2/winx64-packages/mariadb-12.2.2-winx64.zip"
   },
   "php": {
     "versions": [
