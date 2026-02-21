@@ -132,7 +132,7 @@ const serviceFetchers = {
   },
 
   async php() {
-    const releasesData = await fetchJson('https://windows.php.net/downloads/releases/releases.json');
+    const releasesData = await fetchJson('https://downloads.php.net/~windows/releases/releases.json');
 
     const phpVersions = [];
     for (const [versionKey, versionData] of Object.entries(releasesData)) {
@@ -216,7 +216,7 @@ async function updateVersions() {
     try {
       const currentVersion = versions[service]?.version || versions[service]?.versions?.[0]?.version;
       const currentVersions = versions[service]?.versions;
-      
+
       if (service === 'php' && currentVersions) {
         const versionList = currentVersions.map(v => v.version).join(', ');
         console.log(`  Checking ${service}... (current: ${versionList})`);
@@ -261,9 +261,9 @@ async function updateVersions() {
           if (hasChanges) {
             console.log(`    [UPDATE] Changes: ${changedVersions.join(', ')}`);
             hasPatchUpdates = true;
-            updateSummary.patch.push({ 
-              service, 
-              from: currentVersions[0]?.version || 'none', 
+            updateSummary.patch.push({
+              service,
+              from: currentVersions[0]?.version || 'none',
               to: newVersions[0].version,
               changes: changedVersions
             });
