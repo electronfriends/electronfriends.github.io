@@ -7,6 +7,12 @@ on:
     paths:
       - '**'
       - '!.github/workflows/**'
+  workflow_run:
+    workflows: ["Update Wemp Service Versions"]
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -22,32 +28,58 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Check if deployment needed
+        if: github.event_name == 'workflow_run'
+        id: check_deploy
+        run: |
+          # If update-versions pushed a commit, current HEAD will differ from the SHA
+          # that the workflow ran on. If they match, nothing was committed, skip deploy.
+          workflow_sha="${{ github.event.workflow_run.head_sha }}"
+          current_sha=$(git rev-parse HEAD)
+          echo "Workflow ran on SHA: $workflow_sha"
+          echo "Current HEAD SHA:    $current_sha"
+
+          if [[ "$workflow_sha" != "$current_sha" ]]; then
+            echo "New commit pushed by update-versions, proceeding with deployment"
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "No new commits from update-versions, skipping deployment"
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Setup Node
+        if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
+        if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
         run: npm ci
 
       - name: Build project
+        if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
         run: npm run build
 
       - name: Copy API files to build
+        if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
         run: |
           mkdir -p dist/api
           cp -r api/* dist/api/
 
       - name: Setup Pages
+        if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
+        if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
         uses: actions/upload-pages-artifact@v4
         with:
           path: './dist'
@@ -56,7 +88,7 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || needs.build.result == 'success')
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
