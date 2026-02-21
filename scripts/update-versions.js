@@ -148,7 +148,7 @@ const serviceFetchers = {
 
         phpVersions.push({
           version: versionData.version,
-          downloadUrl: `https://windows.php.net/downloads/releases/${buildData.zip.path}`
+          downloadUrl: `https://downloads.php.net/~windows/releases/${buildData.zip.path}`
         });
       }
     }
