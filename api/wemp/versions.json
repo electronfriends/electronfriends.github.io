@@ -1,7 +1,7 @@
 {
   "nginx": {
-    "version": "1.29.5",
-    "downloadUrl": "https://nginx.org/download/nginx-1.29.5.zip"
+    "version": "1.29.6",
+    "downloadUrl": "https://nginx.org/download/nginx-1.29.6.zip"
   },
   "mariadb": {
     "version": "12.2.2",
@@ -10,12 +10,12 @@
   "php": {
     "versions": [
       {
-        "version": "8.5.3",
-        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.5.3-nts-Win32-vs17-x64.zip"
+        "version": "8.5.4",
+        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.5.4-nts-Win32-vs17-x64.zip"
       },
       {
-        "version": "8.4.18",
-        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.4.18-nts-Win32-vs17-x64.zip"
+        "version": "8.4.19",
+        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.4.19-nts-Win32-vs17-x64.zip"
       },
       {
         "version": "8.3.30",
