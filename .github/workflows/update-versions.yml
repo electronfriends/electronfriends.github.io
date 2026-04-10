@@ -21,13 +21,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: 24
+          cache: npm
 
       - name: Update service versions
         id: update
@@ -117,7 +117,7 @@ jobs:
 
       - name: Checkout repository
         if: steps.check.outputs.needs_update == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: main
 
@@ -159,7 +159,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.check.outputs.needs_update == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "bump ${{ matrix.service }} from ${{ steps.details.outputs.from_version }} to ${{ steps.details.outputs.to_version }}"

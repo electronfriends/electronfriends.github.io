@@ -29,10 +29,12 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    outputs:
+      artifact_uploaded: ${{ steps.upload_artifact.outputs.artifact_id != '' }}
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Check if deployment needed
         if: github.event_name == 'workflow_run'
@@ -55,10 +57,10 @@ jobs:
 
       - name: Setup Node
         if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: 24
+          cache: npm
 
       - name: Install dependencies
         if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
@@ -76,11 +78,12 @@ jobs:
 
       - name: Setup Pages
         if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v6
 
       - name: Upload artifact
         if: github.event_name != 'workflow_run' || steps.check_deploy.outputs.should_deploy == 'true'
-        uses: actions/upload-pages-artifact@v4
+        id: upload_artifact
+        uses: actions/upload-pages-artifact@v5
         with:
           path: './dist'
 
@@ -88,7 +91,7 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_run' || needs.build.result == 'success')
+    if: needs.build.outputs.artifact_uploaded == 'true'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -96,4 +99,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
