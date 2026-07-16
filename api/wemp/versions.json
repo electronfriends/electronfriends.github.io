@@ -1,7 +1,7 @@
 {
   "nginx": {
-    "version": "1.31.2",
-    "downloadUrl": "https://nginx.org/download/nginx-1.31.2.zip"
+    "version": "1.31.3",
+    "downloadUrl": "https://nginx.org/download/nginx-1.31.3.zip"
   },
   "mariadb": {
     "version": "12.3.2",
