@@ -10,12 +10,12 @@
   "php": {
     "versions": [
       {
-        "version": "8.5.9",
-        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.5.9-nts-Win32-vs17-x64.zip"
+        "version": "8.5.10",
+        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.5.10-nts-Win32-vs17-x64.zip"
       },
       {
-        "version": "8.4.24",
-        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.4.24-nts-Win32-vs17-x64.zip"
+        "version": "8.4.25",
+        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.4.25-nts-Win32-vs17-x64.zip"
       },
       {
         "version": "8.3.33",
