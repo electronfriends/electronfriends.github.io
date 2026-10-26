@@ -10,20 +10,20 @@
   "php": {
     "versions": [
       {
-        "version": "8.5.12",
-        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.5.12-nts-Win32-vs17-x64.zip"
+        "version": "8.5.12-1",
+        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.5.12-1-nts-Win32-vs17-x64.zip"
       },
       {
-        "version": "8.4.27",
-        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.4.27-nts-Win32-vs17-x64.zip"
+        "version": "8.4.27-1",
+        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.4.27-1-nts-Win32-vs17-x64.zip"
       },
       {
-        "version": "8.3.36",
-        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.3.36-nts-Win32-vs16-x64.zip"
+        "version": "8.3.36-1",
+        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.3.36-1-nts-Win32-vs16-x64.zip"
       },
       {
-        "version": "8.2.35",
-        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.2.35-nts-Win32-vs16-x64.zip"
+        "version": "8.2.35-1",
+        "downloadUrl": "https://downloads.php.net/~windows/releases/php-8.2.35-1-nts-Win32-vs16-x64.zip"
       },
       {
         "version": "8.1.34",
